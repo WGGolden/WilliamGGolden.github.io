@@ -1,0 +1,23 @@
+name: "William Golden"                                
+output_dir: "."
+navbar:
+  title: "William Golden"                            
+  type: inverse
+  left:
+    - text: "My project"
+      icon: fa-home
+      href: index.html
+    - text: "About"
+      icon: fa-user 
+      href: about.html
+  right:
+    - text: "Contact me"
+      icon: fa-envelope-o
+      href: mailto:10901547@uvu.edu                    
+    - text: "GitHub"
+      icon: fa-github
+      href: https://github.com/WGGolden/      # CHANGE HERE 
+output:
+  html_document:
+    remote_theme: mmistakes/minimal-mistakes
+    highlight: textmate

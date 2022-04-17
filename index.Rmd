@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Introduction
 
-What will the weather look like morrow? For my final project I want to build a time-series model that learns weather patterns over various regions and predicts future weather conditions in Utah County. My weather data of Utah County was collected by the 
+What will the weather look like tomorrow? For my final project I want to build a time-series model that learns weather patterns over various regions and predicts future weather conditions in Utah County. My weather data of Utah County was collected by the 
 National Center for Environmental Information (https://www.ncdc.noaa.gov/cdo-web/). This current data shows the amount of precipitation recorded each day from 2000-2022. 
 
 

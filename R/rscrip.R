@@ -1,16 +1,3 @@
-suppressPackageStartupMessages(library(knitr))
-suppressPackageStartupMessages(library(caret))
-suppressPackageStartupMessages(library(gmodels))
-suppressPackageStartupMessages(library(lattice))
-suppressPackageStartupMessages(library(ggplot2))
-suppressPackageStartupMessages(library(gridExtra))
-suppressPackageStartupMessages(library(Kmisc))
-suppressPackageStartupMessages(library(ROCR))
-suppressPackageStartupMessages(library(corrplot))
-
-
-####
-
 library(MASS)
 library(forecast)
 library(tidyverse)
@@ -26,30 +13,28 @@ df2 <- read.csv("./Data/Raw/2010-Present.csv")
 
 # cleaning data
 
-df <- df1 %>% 
+df1 <- df1 %>% 
   select(PRCP,DATE)
 
-df %>% 
-  mutate(DATE=as.Date(df$DATE,"%Y-%m-%d"))
+df1 <- rename(df1, ds=DATE)
 
-df <- df %>% rename(ds=DATE) %>% 
-  rename(value=PRCP)
+df1 <- rename(df1, y=PRCP)
 
-ggplot(df,aes(x=ds,y=value))+
-  geom_line()
 
-# Lambda thingy
 
-df <- df %>% filter(!df$value==0)
+df2 <- df2 %>% 
+  select(PRCP,DATE)
 
-lam = BoxCox.lambda(df$value, method = "loglik")
+df2 <- rename(df2, ds=DATE)
 
-df$y = BoxCox(df$value, lam)
+df2 <- rename(df2, y=PRCP)
 
-df.m <- melt(df, measure.vars=c("value", "y"))
+df <- rbind(df1,df2)
 
-ggplot(df.m,aes(x=ds,y=value))+
-  geom_line()
+ggplot(df,aes(x=ds,y=y))+
+  geom_line()+
+  labs(x="Year",
+       y="Recorded Percipitation")
 
 # We thank thee oh god for a prophet
 
@@ -63,10 +48,5 @@ plot(m, forecast)
 
 prophet_plot_components(m, forecast)
 
-# Revert
-
-inverse_forecast <- forecast
-inverse_forecast <- column_to_rownames(inverse_forecast, var = "ds")
-inverse_forecast$yhat_untransformed = InvBoxCox(forecast$yhat, lam)
 
 

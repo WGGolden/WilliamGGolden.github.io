@@ -1,7 +1,0 @@
----
-title: "About me"
----
-
-## Header
-
-I am a third-year student at Utah Valley University studying biotechnology.

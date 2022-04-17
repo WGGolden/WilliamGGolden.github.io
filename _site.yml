@@ -16,7 +16,7 @@ navbar:
       href: mailto:10901547@uvu.edu                    
     - text: "GitHub"
       icon: fa-github
-      href: https://github.com/WGGolden/      # CHANGE HERE 
+      href: https://github.com/WGGolden/ 
 output:
   html_document:
     remote_theme: mmistakes/minimal-mistakes

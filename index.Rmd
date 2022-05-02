@@ -1,5 +1,5 @@
 ---
-sstitle: "Final Project Draft"
+sstitle: "Final Project"
 author: "William Golden"
 date: "3/29/2022"
 output: html_document
@@ -9,103 +9,289 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Introduction
 
-What will the weather look like tomorrow? For my final project I want to build a time-series model that learns weather patterns over various regions and predicts future weather conditions in Utah County. My weather data of Utah County was collected by the 
-National Center for Environmental Information (https://www.ncdc.noaa.gov/cdo-web/). This current data shows the amount of precipitation recorded each day from 2000-2022. 
-
-
-# Code 
-
-## Loading Packages
-
-```{r, message=FALSE}
+```{r,echo=FALSE,message=FALSE,results='hide',warning=FALSE}
 library(MASS)
 library(forecast)
 library(tidyverse)
 library(prophet)
 library(reshape2)
-```
+library(leaflet)
+library(gganimate)
 
-## Loading Data
 
-```{r}
 df1 <- read.csv("./Data/Raw/2000-2009.csv")
+
+df1$YEAR <- df1$DATE %>% str_trunc(4,ellipsis = "") %>% as.numeric()
+
+Clean1 <- df1 %>% 
+  group_by(YEAR,NAME, LATITUDE,LONGITUDE) %>% 
+  summarize(TotalPrecip=sum(PRCP,na.rm = TRUE),
+            AvgPrecip=mean(PRCP,na.rm=TRUE))
+
 df2 <- read.csv("./Data/Raw/2010-Present.csv")
+
+df2$YEAR <- df2$DATE %>% str_trunc(4,ellipsis = "") %>% as.numeric()
+
+Clean2 <- df2 %>% 
+  group_by(YEAR,NAME, LATITUDE,LONGITUDE) %>% 
+  summarize(TotalPrecip=sum(PRCP,na.rm = TRUE),
+            AvgPrecip=mean(PRCP,na.rm=TRUE))
+
+df3 <- read.csv("./Data/Raw/1990-1999.csv")
+
+df3$YEAR <- df3$DATE %>% str_trunc(4,ellipsis = "") %>% as.numeric()
+
+Clean3 <- df3 %>% 
+  group_by(YEAR,NAME, LATITUDE,LONGITUDE) %>% 
+  summarize(TotalPrecip=sum(PRCP,na.rm = TRUE),
+            AvgPrecip=mean(PRCP,na.rm=TRUE))
+
+df4 <- read.csv("./Data/Raw/1980-1989.csv")
+
+df4$YEAR <- df4$DATE %>% str_trunc(4,ellipsis = "") %>% as.numeric()
+
+Clean4 <- df4 %>% 
+  group_by(YEAR,NAME, LATITUDE,LONGITUDE) %>% 
+  summarize(TotalPrecip=sum(PRCP,na.rm = TRUE),
+            AvgPrecip=mean(PRCP,na.rm=TRUE))
+
+
+
+df5 <- read.csv("./Data/Raw/1970-1979.csv")
+
+df5$YEAR <- df5$DATE %>% str_trunc(4,ellipsis = "") %>% as.numeric()
+
+Clean5 <- df5 %>% 
+  group_by(YEAR,NAME, LATITUDE,LONGITUDE) %>% 
+  summarize(TotalPrecip=sum(PRCP,na.rm = TRUE),
+            AvgPrecip=mean(PRCP,na.rm=TRUE))
+
+
+
+Clean <- rbind(Clean1,Clean2,Clean3,Clean4,Clean5)
+
+rm(list=setdiff(ls(), "Clean"))
 ```
 
-## cleaning data
 
-I selected the recorded precipitation and the date from two data sets, then combined them into one 
-data set. 
+# Introduction
 
+
+```{r,echo=FALSE,message=FALSE,results='hide',warning=FALSE}
+library(sf)
+library(leaflet)
+devtools::install_github("ropensci/USAboundaries")
+devtools::install_github("ropensci/USAboundariesData")
+library(USAboundaries)
+
+m <- leaflet() %>% 
+  setView(lng = -111.6952, lat = 40.1542,zoom = 8) %>% 
+  addTiles()
+
+# extract polygon info for Utah County border
+ut_counties <- us_counties(states = "Utah",resolution = "high") 
+
+#clean extra column
+ut_counties <- ut_counties[,-9]
+ut_counties %>% 
+  filter(name == "Utah")
+
+
+utah_co <- ut_counties %>% 
+  filter(name == "Utah")
+
+ut_co_poly <- utah_co$geometry
+latlon <- ut_co_poly %>% unlist()
+long <- latlon[1:(length(latlon)/2)]
+lat <- latlon[(length(long)+1):length(latlon)]
+
+```
+
+
+For this project, I wanted to look at weather data in Utah County (as seen above) and predict when it would rain based
+off of the collected data. I gathered data from the 
+National Center for Environmental Information (https://www.ncdc.noaa.gov/cdo-web/). This data shows the amount of precipitation recorded each day from 1970-2022. 
+
+
+# Analyzing the Data
+
+This data set contains a ton of daily records of precipitation in Utah County. After wrangling the data, 
+the dataset looks like this: 
 ```{r}
-df1 <- df1 %>% 
-  select(PRCP,DATE)
+Clean %>% glimpse()
+```
+
+
+To better analyze 
+where this data is being collected, here are two maps showing the location of the weather stations 
+and how much precipitation each one recorded for the year 1970 and 2021. 
+
+```{r, message=FALSE,echo=FALSE}
+stations <- Clean %>% filter(YEAR==1970)
+
+stations_long <- stations$LONGITUDE
+stations_lat <- stations$LATITUDE
+
+
+m %>% 
+  addPolygons(lng = long,
+              lat = lat,
+              color = "Grey",
+              fillOpacity = .1) %>% 
+  addCircles(lng = stations_long,
+             lat=stations_lat,
+             radius = stations$AvgPrecip*40000,
+             label = paste0(stations$NAME,": Total Precipiation (inches) in 1970= ",
+                            stations$TotalPrecip),
+             fillColor = "Blue",
+             color = "Purple")
+
+stations2 <- Clean %>% filter(YEAR==2021)
+
+
+stations_long2 <- stations2$LONGITUDE
+stations_lat2 <- stations2$LATITUDE
+
+
+m %>% 
+  addPolygons(lng = long,
+              lat = lat,
+              color = "Grey",
+              fillOpacity = .1) %>% 
+  addCircles(lng = stations_long2,
+             lat=stations_lat2,
+             radius = stations2$AvgPrecip*40000,
+             label = paste0(stations2$NAME,": Total Precipiation (inches) in 2021= ",
+                            stations2$TotalPrecip),
+             fillColor = "Blue",
+             color = "Purple")
+```
+
+
+Something I wanted to look for in this dataset is how precipitation has changed over time in Utah County.
+I created this graph showing the change in total precipitation in Utah County from 1970 until now. 
+
+```{r,message=FALSE,echo=FALSE}
+q <- Clean %>% 
+  group_by(YEAR) %>% 
+  summarize(TotalPrcp = mean(TotalPrecip)) %>% 
+  ggplot(aes(x=YEAR,y=TotalPrcp))+
+  geom_line() +
+  labs(x="Year",
+       y="Total Precipiation (Inches)",
+       title = "Total Precipiation over Time in Utah County")
+q + 
+  geom_point() +
+  transition_reveal(YEAR)+
+  theme_classic()
+```
+
+
+Another visual I've created is the variance of yearly recorded precipitation across different
+weather stations. The following graph shows how much change is in the total precipitation recorded
+for the weather stations each year. 
+
+```{r, echo=FALSE,message=FALSE}
+p <- Clean %>% 
+  group_by(YEAR, NAME) %>% 
+  summarize(TotalPrcp = mean(TotalPrecip)) %>% 
+  ggplot(aes(x=NAME, y=TotalPrcp))+
+  geom_col()+
+  labs(x="Station Name",
+       y="Total Precipiation (Inches)")+
+  theme(axis.text.x = (element_text(angle = 60, hjust = 1)))
+
+
+p+transition_time(YEAR) +
+  labs(title = "Year: {frame_time}")
+```
+
+
+## Creating a Predictive Model Using the Prohpet Package
+
+I fed my data into a program called Prophet (made by Facebook) to create predictions of future
+amounts of precipitation based off historical data. 
+
+```{r,message=FALSE,echo=FALSE,warning=FALSE}
+df1 <- read.csv("./Data/Raw/2000-2009.csv")
+
+Clean1 <- df1 %>% 
+  group_by(DATE,NAME) %>% 
+  summarize(TotalPrecip=sum(PRCP,na.rm = TRUE),
+            AvgPrecip=mean(PRCP,na.rm=TRUE))
+
+df2 <- read.csv("./Data/Raw/2010-Present.csv")
+
+Clean2 <- df2 %>% 
+  group_by(DATE,NAME) %>% 
+  summarize(TotalPrecip=sum(PRCP,na.rm = TRUE),
+            AvgPrecip=mean(PRCP,na.rm=TRUE))
+
+df3 <- read.csv("./Data/Raw/1990-1999.csv")
+
+Clean3 <- df3 %>% 
+  group_by(DATE,NAME) %>% 
+  summarize(TotalPrecip=sum(PRCP,na.rm = TRUE),
+            AvgPrecip=mean(PRCP,na.rm=TRUE))
+
+df4 <- read.csv("./Data/Raw/1980-1989.csv")
+
+Clean4 <- df4 %>% 
+  group_by(DATE,NAME) %>% 
+  summarize(TotalPrecip=sum(PRCP,na.rm = TRUE),
+            AvgPrecip=mean(PRCP,na.rm=TRUE))
+
+
+
+df5 <- read.csv("./Data/Raw/1970-1979.csv")
+
+Clean5 <- df5 %>% 
+  group_by(DATE,NAME) %>% 
+  summarize(TotalPrecip=sum(PRCP,na.rm = TRUE),
+            AvgPrecip=mean(PRCP,na.rm=TRUE))
+
+
+
+Clean <- rbind(Clean1,Clean2,Clean3,Clean4,Clean5)
+
+df1 <- Clean %>% 
+  select(TotalPrecip,DATE)
 
 df1 <- rename(df1, ds=DATE)
 
-df1 <- rename(df1, y=PRCP)
-
-
-
-df2 <- df2 %>% 
-  select(PRCP,DATE)
-
-df2 <- rename(df2, ds=DATE)
-
-df2 <- rename(df2, y=PRCP)
-
-df <- rbind(df1,df2)
+df1 <- rename(df1, y=TotalPrecip)
 ```
 
-## Plot
-
-Here is the amount of precipitation recorded over 20 years. I will work on making the x axis
-display the years appropriately. 
-
-```{r}
-ggplot(df,aes(x=ds,y=y))+
-  geom_line()+
-  labs(x="Year",
-       y="Recorded Precipitation")
-
-```
-
-## Making Predictions
-
-Using the prophet function from facebook, I can create a prediction of the weather in Utah county 
-based on previous trends of precipitation. 
-
-```{r}
-m <- prophet(df)
+```{r,message=FALSE,echo=FALSE,warning=FALSE}
+m <- prophet(df1)
 
 future <- make_future_dataframe(m, periods = 365)
 
 forecast <- predict(m, future)
-```
 
-Here is a plot of the previous weather with a short prediction of future precipitation. 
-
-```{r}
 plot(m, forecast)
 ```
 
-This graph shows what prophet has learned from the data given. It shows that there is little 
-precipitation in the summer and more during the spring and winter. 
+This doesn't look like much, but this graph is showing how much data the Prophet program is analyzing as 
+well as a short prediction of future amounts of precipitation in Utah County. Since day-to-day, the 
+amount of precipitation is between 0-1 inches, the data is hard to visualize in a large graph like this.
 
-```{r}
+
+Another tool from the Prophet package is to show model-created trends in precipitation over the year and 
+over time. 
+
+```{r,message=FALSE,echo=FALSE,warning=FALSE}
 prophet_plot_components(m, forecast)
 ```
 
+
+
+
 ## Conclusion
 
-### Addressing my ultimate question
+I've managed to wrangle real-life data into a workable data set that shows the changes of precipitation
+ in Utah County for over 50 years. I've used the Prophet package to predict the rainfall amounts in the 
+ following year as well as displayed learned trends of rainfall yearly in Utah County. 
 
-So far I have predicted the general trend of weather in Utah County using the prophet package. I still 
-need to figure out how I can guess the weather tomorrow. 
-
-### Things to do 
-
-I need to add more to my project; I want to display a prediction of the weather of a selected time period (specifically, show what the weather will be like tomorrow). I need to look more into the prophet function and other possible resources to get more specific predictions. I also want to work on cleaning this page up and make it look more pleasing to the eye.  
 

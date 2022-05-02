@@ -2,6 +2,6 @@
 title: "About me"
 ---
 
-## Introduction
+![](images/me.jpeg)
 
-I am a third-year student at Utah Valley University studying biotechnology.
+### I am a third-year student at Utah Valley University studying biotechnology. I am originally from Des Moines, Iowa and moved to Utah in 2019 after doing missionary work in Busan, South Korea. I love spending time outdoors with my wife, Emma. 

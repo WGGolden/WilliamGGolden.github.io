@@ -292,6 +292,6 @@ prophet_plot_components(m, forecast)
 
 I've managed to wrangle real-life data into a workable data set that shows the changes of precipitation
  in Utah County for over 50 years. I've used the Prophet package to predict the rainfall amounts in the 
- following year as well as displayed learned trends of rainfall yearly in Utah County. 
+ following year as well as displayed how the Prophet packages learns the rainfall patterns in Utah County. 
 
 
